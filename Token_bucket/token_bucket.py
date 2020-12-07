@@ -17,7 +17,7 @@
 from .storage_base import StorageBase
 
 
-class Limiter(object):
+class TokenBucket(object):
     """Limits demand for a finite resource via keyed token buckets.
 
     A limiter manages a set of token buckets that have an identical
