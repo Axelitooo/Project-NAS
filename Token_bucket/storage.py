@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .storage_base import StorageBase
+from storage_base import StorageBase
 
 
 class MemoryStorage(StorageBase):
@@ -119,7 +119,7 @@ class MemoryStorage(StorageBase):
             ]
 
         except KeyError:
-            self._buckets[key] = [capacity, time.time()]
+            self._buckets[key] = [capacity, now]
 
     def consume(self, key, num_tokens):
         """Attempt to take one or more tokens from a bucket.

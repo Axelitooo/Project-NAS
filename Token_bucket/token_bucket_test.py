@@ -1,13 +1,18 @@
-from .token_bucket import TokenBucket
+# import token_bucket
+
+import random
+from storage import MemoryStorage  # NOQA
+from storage_base import StorageBase  # NOQA
+from token_bucket import TokenBucket  # NOQA
 
 if __name__ == "__main__":
 	keys = ['1', '2', '3', '4', '5']
 
-	storage = token_bucket.MemoryStorage()
-	tokenBucket = token_bucket.TokenBucket(10, 100, storage)
+	storage = MemoryStorage()
+	tokenBucket = TokenBucket(10, 100, storage)
 
 	time = 0
 	for _ in range(1000):
-		time += randomInt(0, 10)
-		tokenBucket.consume(randomChoice(keys), randomInt(0, 10), time)
+		time += random.randint(1, 10)
+		tokenBucket.consume(random.choice(keys), random.randint(1, 10), time)
 

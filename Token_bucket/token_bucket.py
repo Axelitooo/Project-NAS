@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .storage_base import StorageBase
+from storage_base import StorageBase
 
 class TokenBucket(object):
     """Limits demand for a finite resource via keyed token buckets.
@@ -86,7 +86,7 @@ class TokenBucket(object):
         self._capacity = capacity
         self._storage = storage
 
-    def consume(self, key, num_tokens=1, time):
+    def consume(self, key, time, num_tokens=1):
         """Attempt to take one or more tokens from a bucket.
 
         If the specified token bucket does not yet exist, it will be
