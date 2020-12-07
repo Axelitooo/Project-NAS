@@ -16,7 +16,6 @@
 
 from .storage_base import StorageBase
 
-
 class TokenBucket(object):
     """Limits demand for a finite resource via keyed token buckets.
 
@@ -87,7 +86,7 @@ class TokenBucket(object):
         self._capacity = capacity
         self._storage = storage
 
-    def consume(self, key, num_tokens=1):
+    def consume(self, key, num_tokens=1, time):
         """Attempt to take one or more tokens from a bucket.
 
         If the specified token bucket does not yet exist, it will be
@@ -127,5 +126,5 @@ class TokenBucket(object):
         if num_tokens < 1:
             raise ValueError('num_tokens must be >= 1')
 
-        self._storage.replenish(key, self._rate, self._capacity)
+        self._storage.replenish(key, self._rate, self._capacity, time)
         return self._storage.consume(key, num_tokens)

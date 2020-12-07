@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time
-
 from .storage_base import StorageBase
 
 
@@ -52,7 +50,7 @@ class MemoryStorage(StorageBase):
 
         return 0
 
-    def replenish(self, key, rate, capacity):
+    def replenish(self, key, rate, capacity, now):
         """Add tokens to a bucket per the given rate.
 
         This method is exposed for use by the token_bucket.Limiter
@@ -95,8 +93,6 @@ class MemoryStorage(StorageBase):
             #          possibility in light of the points above.
 
             tokens_in_bucket, last_replenished_at = self._buckets[key]
-
-            now = time.time()
 
             # NOTE(kgriffs): This will detect many, but not all,
             #   manifestations of the race condition. If a later
