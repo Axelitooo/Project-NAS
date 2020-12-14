@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import time
 
 class Router:
@@ -8,20 +7,6 @@ class Router:
         self.state = state                # int or boolean
         self.tokenBucket = tokenBucket    # list of tockenBucket
         self.neighbors = neighbors      # dictionnary
-=======
-import queue
-
-class Router:
-
-    def __init__(self,id , state, tokenBucket, neighbours, linkStates, LSDB, bufferSize):
-        self.id = id
-        self.state = state                # int or boolean
-        self.tokenBucket = tokenBucket    # list of tockenBucket
-        self.neighbours = neighbours      # dictionnary
->>>>>>> 744dbf0b968c49b1b1f69e95f31612f8f5817381
-        self.LSDB = LSDB                  # list
-        self.lastLSP = {}
-        self.buffer = Queue(bufferSize)
 
     def showNeighbours():
         print(self.neighbours)
@@ -61,11 +46,7 @@ class Router:
 
         
     def sendPacket(self, packet):
-<<<<<<< HEAD
         if self.tokenBucket.consume(packet.destination, time.time_ns(), 1):
-=======
-        if self.tokenBucket.consume(packet.destination, time, packet.size):
->>>>>>> 744dbf0b968c49b1b1f69e95f31612f8f5817381
             if packet.packetType == "ACK":
                 print("ACK sent by " + self.id + " to " + packet.destination)
             elif packet.packetType == "LSP":
