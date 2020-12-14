@@ -1,11 +1,15 @@
+import queue
+
 class Router:
 
-    def __init__(self,id , state, tokenBucket, neighbours, LSDB):
+    def __init__(self,id , state, tokenBucket, neighbours, linkStates, LSDB, bufferSize):
         self.__id = id
         self.__state = state                # int or boolean
         self.__tokenBucket = tokenBucket    # list of tockenBucket
         self.__neighbours = neighbours      # dictionnary
         self.__LSDB = LSDB                  # list
+        self.__lastLSP = {}
+        self.buffer = Queue(bufferSize)
 
     def showNeighbours():
         print(self.__neighbours)
@@ -19,7 +23,8 @@ class Router:
     def computeShortestPath(router):
         print("computing shortest path")
 
-    def receivePacket(packet):
+    def processPacket():
+        packet = self.buffer.get(False, None)
         if state != 0: # if !down
             if packet.packetType == "ACK":
                 expectedAcks.pop(packet.destination)
@@ -29,9 +34,18 @@ class Router:
                 sendPacket(ack)
                 for router in self.neighbors.keys():
                     if router != packet.source:
-                        retransmitPacket = Packet(source = self.id, destination = router, packetType = "LSP", content = packet.content)
-                        sendPacket(retransmitPacket)
+                        if self.__lastLSP[packet.source] != packet.seqnum:
+                            retransmitPacket = Packet(source = self.id, destination = router, packetType = "LSP", content = packet.content)
+                            sendPacket(retransmitPacket)
                 print("LSP received by " + self.id + " from " + packet.source)
+
+    def receivePacket(packet):
+        if self.buffer.full():
+            return 0
+        else:
+            self.buffer.put(packet, False, None)
+            return 1
+
         
     def sendPacket(self, packet):
         if self.__tokenBucket.consume(packet.destination, time, packet.size):
@@ -47,13 +61,12 @@ class Router:
                 return True
         return False
 
-    if __name__ == "__main__":
-
     
-class Packet(source, destination, packetType, content):
+class Packet(source, destination, seqnum, packetType, content):
     def __init__(self):
         self.source = source # router ID
         self.destination = destination # router ID
+        self.seqnum = seqnum
         self.packetType = packetType # packetType is a string, "ACK" or "LSP"
         self.content = content # content is a dictionary of keys = links ("id1-id2"), values = weights
 
