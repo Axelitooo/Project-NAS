@@ -1,18 +1,19 @@
 class Router:
 
-    def __init__(self,id , state, tokenBucket, neighbours, LSDB):
-        self.__id = id
-        self.__state = state                # int or boolean
-        self.__tokenBucket = tokenBucket    # list of tockenBucket
-        self.__neighbours = neighbours      # dictionnary
-        self.__LSDB = LSDB                  # list
+    def __init__(self,id , state, storage, neighbors, LSDB):
+        self.id = id
+        self.state = state                # int or boolean
+        self.storage = storage    # list of tockenBucket
+        self.neighbors = neighbors      # dictionnary
+        self.LSDB = LSDB                  # list
 
     def showNeighbours():
-        print(self.__neighbours)
+        print(self.neighbours)
 
     def addNeighbours(id, weight):
-        if id not in self.__neighbours.keys():
-            self.__neighbours[id] = weight
+        if id not in self.neighbours.keys():
+            self.neighbours[id] = weight
+            self.storage.buckets[id]=TokenBucket(10, 100, self.storage) #rate/s, capacity, storage(list)
         else:
             print("Id already in dictionnary")
 
@@ -24,7 +25,7 @@ class Router:
             if packet.packetType == "ACK":
                 expectedAcks.pop(packet.destination)
                 print("ACK received by " + self.id + " from " + packet.source)
-            else if packet.packetType == "LSP":
+            elif packet.packetType == "LSP":
                 ack = Packet(source = packet.destination, destination = packet.source, packetType = "ACK")
                 sendPacket(ack)
                 for router in self.neighbors.keys():
@@ -37,7 +38,7 @@ class Router:
         if self.__tokenBucket.consume(packet.destination, time, packet.size):
             if packet.packetType == "ACK":
                 print("ACK sent by " + self.id + " to " + packet.destination)
-            else if packet.packetType == "LSP":
+            elif packet.packetType == "LSP":
                 expectedAcks[packet.destination] = TIME # TO DEFINE
                 print("LSP sent by " + self.id + " to " + packet.destination)
 
@@ -47,11 +48,9 @@ class Router:
                 return True
         return False
 
-    if __name__ == "__main__":
 
-
-class Packet(source, destination, packetType, content):
-    def __init__(self):
+class Packet:
+    def __init__(self,source, destination, packetType, content):
         self.source = source # router ID
         self.destination = destination # router ID
         self.packetType = packetType # packetType is a string, "ACK" or "LSP"
