@@ -3,7 +3,7 @@ class Router:
     def __init__(self,id , state, tokenBucket, neighbours, LSDB):
         self.__id = id
         self.__state = state                # int or boolean
-        self.__tokenBucket = tokenBucket    # id of tockenBucket
+        self.__tokenBucket = tokenBucket    # list of tockenBucket
         self.__neighbours = neighbours      # dictionnary
         self.__LSDB = LSDB                  # list
 
@@ -33,18 +33,22 @@ class Router:
                         sendPacket(retransmitPacket)
                 print("LSP received by " + self.id + " from " + packet.source)
         
-    def sendPacket(packet):
-        if packet.packetType == "ACK":
-            print("ACK sent by " + self.id + " to " + packet.destination)
-        else if packet.packetType == "LSP":
-            expectedAcks[packet.destination] = TIME # TO DEFINE
-            print("LSP sent by " + self.id + " to " + packet.destination)
+    def sendPacket(self, packet):
+        if self.__tokenBucket.consume(packet.destination, time, packet.size):
+            if packet.packetType == "ACK":
+                print("ACK sent by " + self.id + " to " + packet.destination)
+            else if packet.packetType == "LSP":
+                expectedAcks[packet.destination] = TIME # TO DEFINE
+                print("LSP sent by " + self.id + " to " + packet.destination)
             
     def usefulContent(packet):
         for element in packet.content:
             if element not in LSBD:
                 return True
         return False
+
+    if __name__ == "__main__":
+
     
 class Packet(source, destination, packetType, content):
     def __init__(self):
