@@ -15,7 +15,7 @@ class Router:
             self.__neighbours[id] = weight
         else:
             print("Id already in dictionnary")
-        
+
     def computeShortestPath(router):
         print("computing shortest path")
 
@@ -32,7 +32,7 @@ class Router:
                         retransmitPacket = Packet(source = self.id, destination = router, packetType = "LSP", content = packet.content)
                         sendPacket(retransmitPacket)
                 print("LSP received by " + self.id + " from " + packet.source)
-        
+
     def sendPacket(self, packet):
         if self.__tokenBucket.consume(packet.destination, time, packet.size):
             if packet.packetType == "ACK":
@@ -40,7 +40,7 @@ class Router:
             else if packet.packetType == "LSP":
                 expectedAcks[packet.destination] = TIME # TO DEFINE
                 print("LSP sent by " + self.id + " to " + packet.destination)
-            
+
     def usefulContent(packet):
         for element in packet.content:
             if element not in LSBD:
@@ -49,16 +49,10 @@ class Router:
 
     if __name__ == "__main__":
 
-    
+
 class Packet(source, destination, packetType, content):
     def __init__(self):
         self.source = source # router ID
         self.destination = destination # router ID
         self.packetType = packetType # packetType is a string, "ACK" or "LSP"
         self.content = content # content is a dictionary of keys = links ("id1-id2"), values = weights
-
-
-        
-
-    
-    

@@ -1,21 +1,28 @@
 import sched, time
 from Token_bucket.storage import MemoryStorage
-from .router import Router
+from Token_bucket.storage_base import StorageBase
+from Token_bucket.token_bucket import TokenBucket
+from router import Router, Packet
 
+storage = MemoryStorage()
+tokenBucket = TokenBucket(10, 100, storage)#rate/s, capacity, storage(list)
 
-s = sched.scheduler(time.time, time.sleep)
-"""
-a = Router()
-b = Router()
-x = Router()
-y = Router()
-z = Router()
-"""
+def demi(t):
+    return
+
+s = sched.scheduler(timefunc = time.time_ns, delayfunc = demi)
+
+a = Router(id = 0, state = True, tokenBucket, neighbors = {}, LSDB= [])
+b = Router(id = 1, state = True, tokenBucket, neighbors = {}, LSDB= [])
+x = Router(id = 2, state = True, tokenBucket, neighbors = {}, LSDB= [])
+y = Router(id = 3, state = True, tokenBucket, neighbors = {}, LSDB= [])
+z = Router(id = 4, state = True, tokenBucket, neighbors = {}, LSDB= [])
+
 listRouter = [a, b, x, y, z]
-listBucket = MemoryStorage()
+# listBucket = MemoryStorage()
 
-def sendPacket(type, propagation, source, destination): #add a sending packet to a neighbour in the calendarQueue
-    print("packet send num: " , num)
+def sendPacket(num, type, propagation, source, destination): #add a sending packet to a neighbour in the calendarQueue
+    print("packet send num: ", num )
     s.enter(propagation,"LSP", receivePacket, argument=(num, type))
     source.sendPacket()
 
@@ -23,8 +30,8 @@ def receivePacket(num, type, destination):
     print("packet received num: " , num)
     destination.receivePacket()
 
-s.enter(5,1, sendPacket, argument=("LSP",2, a.id, b.id))
-s.enter(5,2, sendPacket, argument=("LSP",5, a.id, c.id))
+s.enter(0,1, sendPacket, argument=(1,"LSP",2000000, a.id, b.id))#, a.id, b.id
+s.enter(0,2, sendPacket, argument=(2,"LSP",5000000, a.id, c.id))
 #s.enter(10,1, receivePacket, argument=(1))
 #s.enter(10,2, receivePacket, argument=(2))
 
