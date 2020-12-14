@@ -1,7 +1,7 @@
 import sched, time
-from Token_bucket.storage import MemoryStorage
-from Token_bucket.storage_base import StorageBase
-from Token_bucket.token_bucket import TokenBucket
+from storage import MemoryStorage
+from storage_base import StorageBase
+from token_bucket import TokenBucket
 from router import Router, Packet
 
 storage_a = MemoryStorage()
@@ -10,16 +10,25 @@ storage_x = MemoryStorage()
 storage_y = MemoryStorage()
 storage_z = MemoryStorage()
 
+rate = 10
+capacity = 100
+
+bucket_a = TokenBucket(rate, capacity, storage_a)
+bucket_b = TokenBucket(rate, capacity, storage_b)
+bucket_x = TokenBucket(rate, capacity, storage_x)
+bucket_y = TokenBucket(rate, capacity, storage_y)
+bucket_z = TokenBucket(rate, capacity, storage_z)
+
 def demi(t):
     return
 
 s = sched.scheduler(timefunc = time.time_ns, delayfunc = demi)
 
-a = Router(id = 0, state = True, storage = storage_a, neighbors = {}, LSDB= [])
-b = Router(id = 1, state = True, storage = storage_b, neighbors = {}, LSDB= [])
-x = Router(id = 2, state = True, storage = storage_x, neighbors = {}, LSDB= [])
-y = Router(id = 3, state = True, storage = storage_y, neighbors = {}, LSDB= [])
-z = Router(id = 4, state = True, storage = storage_z, neighbors = {}, LSDB= [])
+a = Router(id = 0, state = True, tokenBucket = bucket_a, neighbors = {}, LSDB= [])
+b = Router(id = 1, state = True, tokenBucket = bucket_b, neighbors = {}, LSDB= [])
+x = Router(id = 2, state = True, tokenBucket = bucket_x, neighbors = {}, LSDB= [])
+y = Router(id = 3, state = True, tokenBucket = bucket_y, neighbors = {}, LSDB= [])
+z = Router(id = 4, state = True, tokenBucket = bucket_z, neighbors = {}, LSDB= [])
 
 listRouter = [a, b, x, y, z]
 # listBucket = MemoryStorage()
