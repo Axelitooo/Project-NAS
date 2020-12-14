@@ -1,3 +1,14 @@
+<<<<<<< HEAD
+import time
+
+class Router:
+
+    def __init__(self,id , state, tokenBucket, neighbors, LSDB):
+        self.id = id
+        self.state = state                # int or boolean
+        self.tokenBucket = tokenBucket    # list of tockenBucket
+        self.neighbors = neighbors      # dictionnary
+=======
 import queue
 
 class Router:
@@ -7,6 +18,7 @@ class Router:
         self.state = state                # int or boolean
         self.tokenBucket = tokenBucket    # list of tockenBucket
         self.neighbours = neighbours      # dictionnary
+>>>>>>> 744dbf0b968c49b1b1f69e95f31612f8f5817381
         self.LSDB = LSDB                  # list
         self.lastLSP = {}
         self.buffer = Queue(bufferSize)
@@ -14,10 +26,9 @@ class Router:
     def showNeighbours():
         print(self.neighbours)
 
-    def addNeighbours(id, weight):
+    def addNeighbours(id, distance):
         if id not in self.neighbours.keys():
-            self.neighbours[id] = weight
-            self.storage.buckets[id]=TokenBucket(10, 100, self.storage) #rate/s, capacity, storage(list)
+            self.neighbours[id] = distance
         else:
             print("Id already in dictionnary")
 
@@ -50,11 +61,15 @@ class Router:
 
         
     def sendPacket(self, packet):
+<<<<<<< HEAD
+        if self.tokenBucket.consume(packet.destination, time.time_ns(), 1):
+=======
         if self.tokenBucket.consume(packet.destination, time, packet.size):
+>>>>>>> 744dbf0b968c49b1b1f69e95f31612f8f5817381
             if packet.packetType == "ACK":
                 print("ACK sent by " + self.id + " to " + packet.destination)
             elif packet.packetType == "LSP":
-                expectedAcks[packet.destination] = TIME # TO DEFINE
+                expectedAcks[packet.destination] = time.time_ns() # TO DEFINE ------------------------------------------------------------------------------------------------------------------------------
                 print("LSP sent by " + self.id + " to " + packet.destination)
 
     def usefulContent(packet):
@@ -70,4 +85,5 @@ class Packet(source, destination, seqnum, packetType, content):
         self.destination = destination # router ID
         self.seqnum = seqnum
         self.packetType = packetType # packetType is a string, "ACK" or "LSP"
-        self.content = content # content is a dictionary of keys = links ("id1-id2"), values = weights
+        self.content = content # content is a dictionary of keys = links ("id1-id2"), values = distances
+        self.size = 1024

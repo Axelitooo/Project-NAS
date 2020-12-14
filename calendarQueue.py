@@ -31,19 +31,19 @@ y = Router(id = 3, state = True, tokenBucket = bucket_y, neighbors = {}, LSDB= [
 z = Router(id = 4, state = True, tokenBucket = bucket_z, neighbors = {}, LSDB= [], bufferSize = 10)
 
 listRouter = [a, b, x, y, z]
-# listBucket = MemoryStorage()
 
-def sendPacket(type, propagation, source, destination): #add a sending packet to a neighbour in the calendarQueue
-    print("packet send to : ", destination.id )
-    s.enter(propagation,"LSP", receivePacket, argument=(type, source))
-    #source.sendPacket()
+def sendPacket(propagation, router_source, router_destination): #add a sending packet to a neighbour in the calendarQueue
+    print("packet send to : ", router_destination.id )
+    packet = Packet(router_source.id, router_destination.id, "LSP", "")
+    s.enter(propagation,1, receivePacket, argument=(packet, router_destination))
+    router_source.sendPacket(packet)
 
-def receivePacket(type, destination):
-    print("packet received by : ", destination.id )
-    #destination.receivePacket()
+def receivePacket(packet, router_destination):
+    print("packet received by : ", packet.destination)
+    router_destination.receivePacket(packet)
 
-s.enter(0,1, sendPacket, argument=("LSP",2000000, a, b))#, a.id, b.id
-s.enter(0,2, sendPacket, argument=("LSP",5000000, z, x))
+s.enter(0,1, sendPacket, argument=(2000000, a, b))#, a.id, b.id
+s.enter(0,2, sendPacket, argument=(5000000, x, y))
 #s.enter(10,1, receivePacket, argument=(1))
 #s.enter(10,2, receivePacket, argument=(2))
 
