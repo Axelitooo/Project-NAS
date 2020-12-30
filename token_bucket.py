@@ -86,18 +86,19 @@ class TokenBucket(object):
         self._capacity = capacity
         self._storage = storage
 
-    def consume(self, key, time, num_tokens=1):
+    def consume(self, key, now, num_tokens=1):
         """Attempt to take one or more tokens from a bucket.
 
         If the specified token bucket does not yet exist, it will be
         created and initialized to full capacity before proceeding.
 
         Args:
-            key (bytes): A string or bytes object that specifies the
+            key (string): A string or bytes object that specifies the
                 token bucket to consume from. If a global limit is
                 desired for all consumers, the same key may be used
                 for every call to consume(). Otherwise, a key based on
                 consumer identity may be used to segregate limits.
+            now (float): the timestamp of the event
         Keyword Args:
             num_tokens (int): The number of tokens to attempt to
                 consume, defaulting to 1 if not specified. It may
@@ -126,5 +127,5 @@ class TokenBucket(object):
         if num_tokens < 1:
             raise ValueError('num_tokens must be >= 1')
 
-        self._storage.replenish(key, self._rate, self._capacity, time)
+        self._storage.replenish(key, self._rate, self._capacity, now)
         return self._storage.consume(key, num_tokens)

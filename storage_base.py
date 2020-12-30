@@ -34,7 +34,7 @@ class StorageBase(object):
         """
 
     @abc.abstractmethod
-    def replenish(self, key, rate, capacity):
+    def replenish(self, key, rate, capacity, now):
         """Add tokens to a bucket per the given rate.
 
         Conceptually, tokens are added to the bucket at a rate of one
@@ -51,6 +51,7 @@ class StorageBase(object):
             capacity (int): Maximum number of tokens that the bucket
                 can hold. Once the bucket if full, additional tokens
                 are discarded.
+            now (float): the timestamp of the event
         """
 
     @abc.abstractmethod
