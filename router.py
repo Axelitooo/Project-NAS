@@ -14,7 +14,7 @@ class Router:
         self.lastLSP = -1
         self.buffer = queue.Queue(bufferSize)
         self.sendfunc = sendfunc
-        self.expectedAcks #dictionary of packet to be ACKed
+        self.expectedAcks = {} #dictionary of packet to be ACKed
 
     def show_neighbours(self):
         print(self.neighbours)
