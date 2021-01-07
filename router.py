@@ -14,6 +14,7 @@ class Router:
         self.lastLSP = -1
         self.buffer = queue.Queue(bufferSize)
         self.sendfunc = sendfunc
+        self.expectedAcks #dictionary of packet to be ACKed
 
     def show_neighbours(self):
         print(self.neighbours)
@@ -24,15 +25,41 @@ class Router:
         else:
             print("Id already in dictionary")
 
-    def compute_shortest_path(self, router):
+    def compute_shortest_path(self, start,end,visited=[],distances={},predecessors={}):
         print("computing shortest path")
+        """Find the shortest path between start and end nodes in a graph (LSDB)"""
+        # we've found our end node, now find the path to it, and return
+        if start==end:
+            path=[]
+            while end != None:
+                path.append(end)
+                end=predecessors.get(end,None)
+            return distances[start], path[::-1]
+        # detect if it's the first time through, set current distance to zero
+        if not visited: distances[start]=0
+        # process neighbors as per algorithm, keep track of predecessors
+        for neighbor in self.LSDB[start]:
+            if neighbor not in visited:
+                neighbordist = distances.get(neighbor,sys.maxsize)
+                tentativedist = distances[start] + self.LSDB[start][neighbor]
+                if tentativedist < neighbordist:
+                    distances[neighbor] = tentativedist
+                    predecessors[neighbor]=start
+        # neighbors processed, now mark the current node as visited
+        visited.append(start)
+        # finds the closest unvisited node to the start
+        unvisiteds = dict((k, distances.get(k,sys.maxsize)) for k in self.LSDB if k not in visited)
+        closestnode = min(unvisiteds, key=unvisiteds.get)
+        # now we can take the closest node and recurse, making it current
+        return shortestpath(self, closestnode,end,visited,distances,predecessors)
 
     def process_packet(self):
         print("processing packet")
         packet = self.buffer.get(False, None)
         if self.state:  # if !down
             if packet.packetType == "ACK":
-                # TODO expectedAcks.pop(packet.destination) + queue.cancel(packet.source, seqnum)
+                # TODO queue.cancel(packet.source, seqnum)
+                expectedAcks.pop(packet.seqnum)
                 print("ACK received by " + str(self.id) + " from " + str(packet.source))
             elif packet.packetType == "LSP":
                 print("processing LSP")
@@ -81,7 +108,8 @@ class Router:
             if packet.packetType == "ACK":
                 print("ACK sent by " + str(self.id) + " to " + str(packet.destination))
             elif packet.packetType == "LSP":
-                # TODO expectedAcks[packet.destination] = TIME  # TO DEFINE
+                self.expectedAcks[packet.seqnum] = packet
+                # TODO add an event to the calender queue saying "if the router hasn't received an ACK by this time, retransmit the packet"
                 print("LSP sent by " + str(self.id) + " to " + str(packet.destination))
 
     def useful_content(self, packet):
