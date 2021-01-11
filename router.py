@@ -32,8 +32,7 @@ class Router:
         packet = self.buffer.get(False, None)
         if self.state:  # if !down
             if packet.packetType == "ACK":
-                # TODO queue.cancel(packet.source, seqnum)
-                self.expectedAcks.pop(packet.id)
+                self.cancel_ack(self.expectedAcks.pop(packet.id))
                 print("ACK received by " + str(self.id) + " from " + str(packet.source))
             elif packet.packetType == "LSP":
                 print("processing LSP")
@@ -41,10 +40,10 @@ class Router:
                 ack = Packet(source=packet.destination, destination=packet.source, packetType="ACK",
                              content=None, id=packet.id)
                 # every LSP packet is ACKed; similarly to TCP behaviour rather than OSPF's one
-                # TODO ACK only if update + cancel if updating LSP received
+                # TODO ACK only if update + cancel if updating LSP received (OSPF implementation)
                 self.send_packet(ack)
                 for link in packet.content.keys():
-                    if (self.LSDB[link] is None) or (self.LSDB[link]["seqnum"] < packet.content[link]["seqnum"]):
+                    if (self.LSDB.get(link) is None) or (self.LSDB[link]["seqnum"] < packet.content[link]["seqnum"]):
                         print("Router", self.id, "updating LSDB")
                         # update your own LSDB
                         self.LSDB[link] = packet.content[link]
@@ -57,7 +56,6 @@ class Router:
                                 packetContent = {link: self.LSDB[link]}
                                 flood_packet = Packet(source=self.id, destination=router, packetType="LSP", content=packetContent, id=packetId)
                                 self.send_packet(flood_packet)
-                                # handle somehow the case when the LSP was lost (ACK not received), related to expectedAcks
                     elif self.LSDB[link]["seqnum"] > packet.content[link]["seqnum"]:
                         print("Router", self.id, "updating", packet.source, "with link", link, "and seqnum", self.LSDB[link]["seqnum"])
                         # the source (other router) has an outdated information, we should update
@@ -66,7 +64,6 @@ class Router:
                         packetContent = {link: self.LSDB[link]}
                         flood_packet = Packet(source=self.id, destination=packet.source, packetType="LSP", content=packetContent, id=packetId)
                         self.send_packet(flood_packet)
-                        # handle somehow the case when the LSP was lost (ACK not received), related to expectedAcks
 
     """Find the shortest path between start and end nodes in a graph (LSDB)"""
     """
@@ -107,8 +104,7 @@ class Router:
             return 1
 
     # sends packet to the scheduler
-    def send_packet(self, packet):
-        delay = 1_000_000_000
+    def send_packet(self, packet, delay=1_000_000_000):
         self.calendar.sendPacket(delay, packet.source, packet.destination, packet)
 
     def send_packet_now(self, packet, now):
@@ -118,7 +114,8 @@ class Router:
                 print("ACK sent by " + str(self.id) + " to " + str(packet.destination))
             elif packet.packetType == "LSP":
                 self.expectedAcks[packet.id] = packet
-                # TODO add an event to the calender queue saying "if the router hasn't received an ACK by this time, retransmit the packet"
+                # TODO investigate why RecursionError is thrown
+                #self.send_packet(packet, delay=10_000_000_000)
                 print("LSP sent by " + str(self.id) + " to " + str(packet.destination))
 
     def useful_content(self, packet):
@@ -127,6 +124,23 @@ class Router:
                 return True
         return False
 
+    """Used for simulation of propagation"""
+    def increment_lsdb_and_flood(self):
+        # increment seqnum for each link in LSDB
+        for link in self.LSDB.keys():
+            self.LSDB[link] = {"weight": self.LSDB[link]["weight"], "seqnum": self.LSDB[link]["seqnum"] + 1}
+        # flood neighbours
+        print("Router", self.id, "FLOODING!!")
+        for router in self.neighbours.keys():
+            self.lastPacketId += 1
+            packetId = str(self.id) + "->" + str(router) + ":" + str(self.lastPacketId)
+            packetContent = self.LSDB
+            flood_packet = Packet(source=self.id, destination=router, packetType="LSP", content=packetContent, id=packetId)
+            self.send_packet(flood_packet)
+
+    def cancel_ack(self, packet):
+        if (packet is not None) and (packet.event is not None):
+            self.calendar.cancelPacket(packet.event)
 
 class Packet:
     def __init__(self, source, destination, packetType, content, id):
@@ -136,3 +150,6 @@ class Packet:
         self.content = content  # content is a dictionary of keys = links ("id1-id2"), values = weights
         self.id = id # id of the packet, used for ACK
         self.size = 1  # ACK and LSP occupies the same buffer size
+
+    def add_event(self, event):
+        self.event = event

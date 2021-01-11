@@ -12,14 +12,25 @@ class CalendarQueue:
     def __init__(self, timefunc, delayfunc):
         self.scheduler = sched.scheduler(timefunc, delayfunc)
 
-    def sendPacket(self, propagation, router_source,
-                   router_destination, packet):  # add a sending packet to a neighbour in the calendarQueue
+    def sendPacket(self, propagation, router_source, router_destination, packet):  # add a sending packet to a neighbour in the calendarQueue
         print(listRouter[router_source].LSDB)
         if packet is None:
-            packet = Packet(router_source, router_destination, 0, "LSP", None)
+            packet = Packet(router_source, router_destination, "LSP", listRouter[router_source].LSDB, str(router_source) + "->" + str(router_destination))
         print("packet send to : ", router_destination)
         listRouter[router_source].send_packet_now(packet, time.time_ns())
-        self.scheduler.enter(propagation, 1, self.receivePacket, argument=(packet, router_destination))
+        event = self.scheduler.enter(propagation, 1, self.receivePacket, argument=(packet, router_destination))
+        if packet.packetType == "LSP":
+            packet.add_event(event)
+
+    def triggerPacketIncrement(self, router_source):
+        print("Ttiggering increment for router", router_source)
+        listRouter[router_source].increment_lsdb_and_flood()
+
+    def cancelPacket(self, event):
+        try:
+            self.scheduler.cancel(event)
+        except ValueError:
+            pass
 
     def receivePacket(self, packet, router_destination):
         res = listRouter[router_destination].receive_packet(packet)
@@ -64,9 +75,7 @@ b.add_neighbour(2, 1)
 x.add_neighbour(0, 1)
 x.add_neighbour(1, 1)
 
-calendarQueue.scheduler.enter(0, 1, calendarQueue.sendPacket, argument=(2000000, 0, 2, None))  # , a.id, b.id
-# s.enter(0, 2, sendPacket, argument=(5000000, 2, 3, None))
-# s.enter(10,1, receivePacket, argument=(1))
-# s.enter(10,2, receivePacket, argument=(2))
+calendarQueue.scheduler.enter(0, 1, calendarQueue.sendPacket, argument=(2_000_000, 0, 2, None))
+calendarQueue.scheduler.enter(10_000_000_000, 1, calendarQueue.triggerPacketIncrement, argument=(0,))
 
 calendarQueue.scheduler.run()
