@@ -14,30 +14,16 @@ class Router:
         self.LSDB = LSDB  # list
         self.buffer = queue.Queue(bufferSize)
         self.calendar = calendar
+        self.lastPacketId = -1
         self.expectedAcks = {}  # dictionary of packet to be ACKed
 
     def show_neighbours(self):
         print(self.neighbours)
 
-    def update_lsdb(self, link, value):
-        for key in self.LSDB.keys():
-            if key == link:
-                if value["weight"] == -1:
-                    self.LSDB.remove(link)
-                    return True
-                elif self.LSDB[link]["weight"] != value["weight"]:
-                    self.LSDB[link] = value
-                    return True
-                else:
-                    return False
-        # if reached here means link not in LSDB
-        self.LSDB[link] = value
-        return True
-
     def add_neighbour(self, id, weight):
         if id not in self.neighbours.keys():
             self.neighbours[id] = weight
-            self.update_lsdb(str(self.id) + "->" + str(id), {"weight": weight, "seqnum": 1})
+            self.LSDB[str(self.id) + "->" + str(id)] = {"weight": weight, "seqnum": 1}
         else:
             print("Id already in dictionary")
 
@@ -47,7 +33,7 @@ class Router:
         if self.state:  # if !down
             if packet.packetType == "ACK":
                 # TODO queue.cancel(packet.source, seqnum)
-                self.expectedAcks.pop(packet.seqnum)
+                self.expectedAcks.pop(packet.id)
                 print("ACK received by " + str(self.id) + " from " + str(packet.source))
             elif packet.packetType == "LSP":
                 print("processing LSP")
@@ -58,31 +44,35 @@ class Router:
                 # TODO ACK only if update + cancel if updating LSP received
                 self.send_packet(ack)
                 for link in packet.content.keys():
-                    if self.lastLSP != packet.seqnum:
-                        if self.lastLSP < packet.seqnum:
-                            print("Router", self.id, "updating LSDB")
-                            # update your own LSDB
-                            self.LSDB = packet.content
-                            self.lastLSP = packet.seqnum
-                            # flood
-                            print("Router", self.id, "FLOODING!!")
-                            for router in self.neighbours.keys():
-                                if router != packet.source:
-                                    retransmit_packet = Packet(source=self.id, destination=router, packetType="LSP",
-                                                               content=self.LSDB, seqnum=self.lastLSP)
-                                    self.send_packet(retransmit_packet)
-                                    # handle somehow the case when the LSP was lost (ACK not received), related to expectedAcks
-                        else:
-                            print("Router", self.id, "updating", packet.source, "with seqnum", self.lastLSP)
-                            # the source (other router) has an outdated information, we should update him
-                            retransmit_packet = Packet(source=self.id, destination=packet.source, packetType="LSP",
-                                                       content=self.LSDB, seqnum=self.lastLSP)
-                            self.send_packet(retransmit_packet)
-                            # handle somehow the case when the LSP was lost (ACK not received), related to expectedAcks
+                    if (self.LSDB[link] is None) or (self.LSDB[link]["seqnum"] < packet.content[link]["seqnum"]):
+                        print("Router", self.id, "updating LSDB")
+                        # update your own LSDB
+                        self.LSDB[link] = packet.content[link]
+                        # flood
+                        print("Router", self.id, "FLOODING!!")
+                        for router in self.neighbours.keys():
+                            if router != packet.source:
+                                self.lastPacketId += 1
+                                packetId = link + ":" + str(self.lastPacketId)
+                                packetContent = {link: self.LSDB[link]}
+                                flood_packet = Packet(source=self.id, destination=router, packetType="LSP", content=packetContent, id=packetId)
+                                self.send_packet(flood_packet)
+                                # handle somehow the case when the LSP was lost (ACK not received), related to expectedAcks
+                    elif self.LSDB[link]["seqnum"] > packet.content[link]["seqnum"]:
+                        print("Router", self.id, "updating", packet.source, "with link", link, "and seqnum", self.LSDB[link]["seqnum"])
+                        # the source (other router) has an outdated information, we should update
+                        self.lastPacketId += 1
+                        packetId = link + ":" + str(self.lastPacketId)
+                        packetContent = {link: self.LSDB[link]}
+                        flood_packet = Packet(source=self.id, destination=packet.source, packetType="LSP", content=packetContent, id=packetId)
+                        self.send_packet(flood_packet)
+                        # handle somehow the case when the LSP was lost (ACK not received), related to expectedAcks
 
+    """Find the shortest path between start and end nodes in a graph (LSDB)"""
+    """
     def compute_shortest_path(self, start, end, visited=[], distances={}, predecessors={}):
         print("computing shortest path")
-        """Find the shortest path between start and end nodes in a graph (LSDB)"""
+        
         # we've found our end node, now find the path to it, and return
         if start == end:
             path = []
@@ -107,6 +97,7 @@ class Router:
         closestnode = min(unvisiteds, key=unvisiteds.get)
         # now we can take the closest node and recurse, making it current
         return self.compute_shortest_path(closestnode, end, visited, distances, predecessors)
+    """
 
     def receive_packet(self, packet):
         if self.buffer.full():
