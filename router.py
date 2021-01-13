@@ -32,7 +32,7 @@ class Router:
         packet = self.buffer.get(False, None)
         if self.state:  # if !down
             if packet.packetType == "ACK":
-                # self.cancel_ack(self.expectedAcks.pop(packet.id))
+                self.cancel_ack(self.expectedAcks.pop(packet.id, None))
                 print("ACK received by " + str(self.id) + " from " + str(packet.source))
             elif packet.packetType == "LSP":
                 print("processing LSP")
@@ -96,6 +96,10 @@ class Router:
         return self.compute_shortest_path(closestnode, end, visited, distances, predecessors)
     """
 
+    def cancel_ack(self, packet):
+        if (packet is not None) and (packet.event is not None):
+            self.calendar.cancelPacket(packet.event)
+
     def receive_packet(self, packet):
         if self.buffer.full():
             return 0
@@ -104,7 +108,7 @@ class Router:
             return 1
 
     # sends packet to the scheduler
-    def send_packet(self, packet, delay=1_000_000_000):
+    def send_packet(self, packet, delay=1_000_000):
         self.calendar.sendPacket(delay, packet.source, packet.destination, packet)
         self.expectedAcks[packet.id] = packet
 
@@ -114,14 +118,17 @@ class Router:
             if packet.packetType == "ACK":
                 print("ACK sent by " + str(self.id) + " to " + str(packet.destination))
             elif packet.packetType == "LSP":
-                if packet in self.expectedAcks:
+                print(packet.id)
+                print(self.expectedAcks.keys())
+                #if packet.id not in self.expectedAcks:
+                if True:
                     self.expectedAcks[packet.id] = packet
                     # TODO investigate why RecursionError is thrown
-                    #self.send_packet(packet, delay=10_000_000_000)
+                    #self.send_packet(packet, delay=10_000_000)
                     print("LSP sent by " + str(self.id) + " to " + str(packet.destination))
-                    delay=1_000_000_000
-                    retransmission_timer = 10_000_000
-                    self.calendar.sendPacket(delay + retransmission_timer, packet.source, packet.destination, packet)
+                    delay=1_000_000
+                    retransmission_timer = 10_500_000
+                    self.calendar.sendPacket(delay + retransmission_timer, packet.source, packet.destination, packet, retransmission=True)
 
     def useful_content(self, packet):
         for element in packet.content.keys():
@@ -155,6 +162,7 @@ class Packet:
         self.content = content  # content is a dictionary of keys = links ("id1-id2"), values = weights
         self.id = id # id of the packet, used for ACK
         self.size = 1  # ACK and LSP occupies the same buffer size
+        self.event = None
 
     def add_event(self, event):
         self.event = event
