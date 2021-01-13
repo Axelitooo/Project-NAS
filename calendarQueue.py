@@ -26,11 +26,11 @@ class CalendarQueue:
         print("Ttiggering increment for router", router_source)
         listRouter[router_source].increment_lsdb_and_flood()
 
-    def cancelPacket(self, event):
-        try:
-            self.scheduler.cancel(event)
-        except ValueError:
-            pass
+    # def cancelPacket(self, event):
+    #     try:
+    #         self.scheduler.cancel(event)
+    #     except ValueError:
+    #         pass
 
     def receivePacket(self, packet, router_destination):
         res = listRouter[router_destination].receive_packet(packet)

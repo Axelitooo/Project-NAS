@@ -32,7 +32,7 @@ class Router:
         packet = self.buffer.get(False, None)
         if self.state:  # if !down
             if packet.packetType == "ACK":
-                self.cancel_ack(self.expectedAcks.pop(packet.id))
+                # self.cancel_ack(self.expectedAcks.pop(packet.id))
                 print("ACK received by " + str(self.id) + " from " + str(packet.source))
             elif packet.packetType == "LSP":
                 print("processing LSP")
@@ -106,6 +106,7 @@ class Router:
     # sends packet to the scheduler
     def send_packet(self, packet, delay=1_000_000_000):
         self.calendar.sendPacket(delay, packet.source, packet.destination, packet)
+        self.expectedAcks[packet.id] = packet
 
     def send_packet_now(self, packet, now):
         # if the destination is considered to be busy the packed is dropped on the source
@@ -113,10 +114,14 @@ class Router:
             if packet.packetType == "ACK":
                 print("ACK sent by " + str(self.id) + " to " + str(packet.destination))
             elif packet.packetType == "LSP":
-                self.expectedAcks[packet.id] = packet
-                # TODO investigate why RecursionError is thrown
-                #self.send_packet(packet, delay=10_000_000_000)
-                print("LSP sent by " + str(self.id) + " to " + str(packet.destination))
+                if packet in self.expectedAcks:
+                    self.expectedAcks[packet.id] = packet
+                    # TODO investigate why RecursionError is thrown
+                    #self.send_packet(packet, delay=10_000_000_000)
+                    print("LSP sent by " + str(self.id) + " to " + str(packet.destination))
+                    delay=1_000_000_000
+                    retransmission_timer = 10_000_000
+                    self.calendar.sendPacket(delay + retransmission_timer, packet.source, packet.destination, packet)
 
     def useful_content(self, packet):
         for element in packet.content.keys():
@@ -138,9 +143,9 @@ class Router:
             flood_packet = Packet(source=self.id, destination=router, packetType="LSP", content=packetContent, id=packetId)
             self.send_packet(flood_packet)
 
-    def cancel_ack(self, packet):
-        if (packet is not None) and (packet.event is not None):
-            self.calendar.cancelPacket(packet.event)
+    # def cancel_ack(self, packet):
+    #     if (packet is not None) and (packet.event is not None):
+    #         self.calendar.cancelPacket(packet.event)
 
 class Packet:
     def __init__(self, source, destination, packetType, content, id):
