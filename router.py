@@ -20,9 +20,9 @@ class Router:
     def show_neighbours(self):
         print(self.neighbours)
 
-    def add_neighbour(self, id, weight):
+    def add_neighbour(self, id, weight, delay=10):
         if id not in self.neighbours.keys():
-            self.neighbours[id] = weight
+            self.neighbours[id] = (weight,delay)
             self.LSDB[str(self.id) + "->" + str(id)] = {"weight": weight, "seqnum": 1}
         else:
             print("Id already in dictionary")
@@ -103,9 +103,9 @@ class Router:
             self.buffer.put(packet, False, None)
             return 1
 
-    # sends packet to the scheduler
-    def send_packet(self, packet, delay=1_000_000_000):
-        self.calendar.sendPacket(delay, packet.source, packet.destination, packet)
+    # sends packet to the scheduler 
+    def send_packet(self, packet, delay=1000):
+        self.calendar.sendPacket(self.neighbours[packet.destination][1], packet.source, packet.destination, packet)
 
     def send_packet_now(self, packet, now):
         # if the destination is considered to be busy the packed is dropped on the source
