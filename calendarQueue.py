@@ -4,9 +4,21 @@ from token_bucket import TokenBucket
 from router import Router, Packet
 
 
-def demi(t):
-    return
+class SimulatedTime:
 
+    staticTime=0
+
+    def __init__(self, staticTime):
+        self.staticTime=staticTime
+
+    def time(self):
+        self.staticTime+=1
+        return self.staticTime
+
+    def dummy(self, time):
+        return
+
+  
 
 class CalendarQueue:
     def __init__(self, timefunc, delayfunc):
@@ -54,7 +66,8 @@ bucket_x = TokenBucket(rate, capacity, storage_x)
 bucket_y = TokenBucket(rate, capacity, storage_y)
 bucket_z = TokenBucket(rate, capacity, storage_z)
 
-calendarQueue = CalendarQueue(timefunc=time.time_ns, delayfunc=demi)
+simu = SimulatedTime(0)
+calendarQueue = CalendarQueue(timefunc=simu.time, delayfunc=simu.dummy)
 
 a = Router(id=0, state=True, tokenBucket=bucket_a, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
            linkStates=None)
@@ -68,14 +81,14 @@ z = Router(id=4, state=True, tokenBucket=bucket_z, neighbours={}, LSDB={}, buffe
            linkStates=None)
 
 listRouter = [a, b, x, y, z]
-a.add_neighbour(1, 1)
-a.add_neighbour(2, 1)
-b.add_neighbour(0, 1)
-b.add_neighbour(2, 1)
-x.add_neighbour(0, 1)
-x.add_neighbour(1, 1)
+a.add_neighbour(1, 1, 10)
+a.add_neighbour(2, 1, 10)
+b.add_neighbour(0, 1, 10)
+b.add_neighbour(2, 1, 10)
+x.add_neighbour(0, 1, 10)
+x.add_neighbour(1, 1, 10)
 
-calendarQueue.scheduler.enter(0, 1, calendarQueue.sendPacket, argument=(2_000_000, 0, 2, None))
-calendarQueue.scheduler.enter(10_000_000_000, 1, calendarQueue.triggerPacketIncrement, argument=(0,))
+calendarQueue.scheduler.enter(0, 1, calendarQueue.sendPacket, argument=(2, 0, 2, None))
+#calendarQueue.scheduler.enter(100, 1, calendarQueue.triggerPacketIncrement, argument=(0,))
 
 calendarQueue.scheduler.run()
