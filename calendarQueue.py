@@ -39,11 +39,6 @@ class CalendarQueue:
         print("Triggering increment for router", router_source)
         listRouter[router_source].increment_lsdb_and_flood()
 
-    def downRouterAndTriggerPacketIncrement(self, router_source, router_down):
-        print("Router", router_down, "is down")
-        listRouter[router_down].down()
-        self.triggerPacketIncrement(router_source)
-
     def cancelPacket(self, event):
         try:
             self.scheduler.cancel(event)
@@ -96,7 +91,10 @@ x.add_neighbour(1, 1)
 
 calendarQueue.scheduler.enter(0, 1, calendarQueue.sendPacket, argument=(2_000_000, 0, 2, None))
 calendarQueue.scheduler.enter(5_000_000_000, 1, calendarQueue.triggerPacketIncrement, argument=(0,))
-calendarQueue.scheduler.enter(10_000_000_000, 1, calendarQueue.downRouterAndTriggerPacketIncrement, argument=(0,2))
-calendarQueue.scheduler.enter(15_000_000_000, 1, lambda: (listRouter[2].up(), print("Router", 2, "is up!")))
+calendarQueue.scheduler.enter(10_000_000_000, 1, lambda: (listRouter[2].down(),
+                                                          print("Router", 2, "is down!"),
+                                                          calendarQueue.triggerPacketIncrement(0)))
+calendarQueue.scheduler.enter(15_000_000_000, 1, lambda: (listRouter[2].up(),
+                                                          print("Router", 2, "is up!")))
 
 calendarQueue.scheduler.run()
