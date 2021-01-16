@@ -1,8 +1,4 @@
 import queue
-import sys
-from token_bucket import TokenBucket
-from storage import MemoryStorage
-
 
 class Router:
 
@@ -17,12 +13,18 @@ class Router:
         self.lastPacketId = -1
         self.expectedAcks = {}  # dictionary of packet to be ACKed
 
+    def down(self):
+        self.state = False
+
+    def up(self):
+        self.state = True
+
     def show_neighbours(self):
         print(self.neighbours)
 
-    def add_neighbour(self, id, weight):
+    def add_neighbour(self, id, weight, delay=10):
         if id not in self.neighbours.keys():
-            self.neighbours[id] = weight
+            self.neighbours[id] = (weight, delay)
             self.LSDB[str(self.id) + "->" + str(id)] = {"weight": weight, "seqnum": 1}
         else:
             print("Id already in dictionary")
@@ -30,7 +32,7 @@ class Router:
     def process_packet(self):
         print("processing packet")
         packet = self.buffer.get(False, None)
-        if self.state:  # if !down
+        if self.state:  # if not down
             if packet.packetType == "ACK":
                 self.cancel_ack(self.expectedAcks.pop(packet.id, None))
                 print("ACK received by " + str(self.id) + " from " + str(packet.source))
@@ -98,10 +100,11 @@ class Router:
 
     def cancel_ack(self, packet):
         if (packet is not None) and (packet.event is not None):
+            print(packet.event)
             self.calendar.cancelPacket(packet.event)
 
     def receive_packet(self, packet):
-        if self.buffer.full():
+        if self.buffer.full() or (not self.state):
             return 0
         else:
             self.buffer.put(packet, False, None)
@@ -118,17 +121,12 @@ class Router:
             if packet.packetType == "ACK":
                 print("ACK sent by " + str(self.id) + " to " + str(packet.destination))
             elif packet.packetType == "LSP":
-                print(packet.id)
-                print(self.expectedAcks.keys())
-                #if packet.id not in self.expectedAcks:
-                if True:
-                    self.expectedAcks[packet.id] = packet
-                    # TODO investigate why RecursionError is thrown
-                    #self.send_packet(packet, delay=10_000_000)
-                    print("LSP sent by " + str(self.id) + " to " + str(packet.destination))
-                    delay=1_000_000
-                    retransmission_timer = 10_500_000
-                    self.calendar.sendPacket(delay + retransmission_timer, packet.source, packet.destination, packet, retransmission=True)
+                self.expectedAcks[packet.id] = packet
+                print("LSP sent by " + str(self.id) + " to " + str(packet.destination))
+                delay = 1_000_000
+                retransmission_timer = 100_500_000
+                print("Program retransmission")
+                self.calendar.scheduleRetransmission(delay, retransmission_timer, packet)
 
     def useful_content(self, packet):
         for element in packet.content.keys():

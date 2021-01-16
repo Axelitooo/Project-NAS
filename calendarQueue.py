@@ -4,28 +4,45 @@ from token_bucket import TokenBucket
 from router import Router, Packet
 
 
-def demi(t):
-    return
+class SimulatedTime:
+
+    staticTime=0
+
+    def __init__(self, staticTime):
+        self.staticTime=staticTime
+
+    def time(self):
+        return self.staticTime
+
+    def dummy(self, delay):
+        self.staticTime += delay
 
 
 class CalendarQueue:
-    def __init__(self, timefunc, delayfunc):
-        self.scheduler = sched.scheduler(timefunc, delayfunc)
+    def __init__(self, simu):
+        self.scheduler = sched.scheduler(simu.time, simu.dummy)
 
-    def sendPacket(self, propagation, router_source, router_destination, packet, retransmission=False):  # add a sending packet to a neighbour in the calendarQueue
+    def sendPacket(self, propagation, router_source, router_destination, packet):  # add a sending packet to a neighbour in the calendarQueue
         print(listRouter[router_source].LSDB)
         if packet is None:
             packet = Packet(router_source, router_destination, "LSP", listRouter[router_source].LSDB, str(router_source) + "->" + str(router_destination))
         print("packet send to : ", router_destination)
-        event = self.scheduler.enter(propagation, 1, self.receivePacket, argument=(packet, router_destination))
-        if not retransmission:
-            listRouter[router_source].send_packet_now(packet, time.time_ns())
-        if packet.packetType == "LSP":
-            packet.add_event(event)
+        self.scheduler.enter(propagation, 1, self.receivePacket, argument=(packet, router_destination))
+        listRouter[router_source].send_packet_now(packet, simu.time())
+
+    def scheduleRetransmission(self, delay, retransmission_timer, packet):
+        event = self.scheduler.enter(delay, 1, self.sendPacket, argument=(retransmission_timer, packet.source, packet.destination, packet))
+        packet.event = event
 
     def triggerPacketIncrement(self, router_source):
+        print("------------------------------------------------------------------------------")
         print("Triggering increment for router", router_source)
         listRouter[router_source].increment_lsdb_and_flood()
+
+    def downRouterAndTriggerPacketIncrement(self, router_source, router_down):
+        print("Router", router_down, "is down")
+        listRouter[router_down].down()
+        self.triggerPacketIncrement(router_source)
 
     def cancelPacket(self, event):
         try:
@@ -55,7 +72,8 @@ bucket_x = TokenBucket(rate, capacity, storage_x)
 bucket_y = TokenBucket(rate, capacity, storage_y)
 bucket_z = TokenBucket(rate, capacity, storage_z)
 
-calendarQueue = CalendarQueue(timefunc=time.time_ns, delayfunc=demi)
+simu = SimulatedTime(0)
+calendarQueue = CalendarQueue(simu)
 
 a = Router(id=0, state=True, tokenBucket=bucket_a, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
            linkStates=None)
@@ -77,6 +95,8 @@ x.add_neighbour(0, 1)
 x.add_neighbour(1, 1)
 
 calendarQueue.scheduler.enter(0, 1, calendarQueue.sendPacket, argument=(2_000_000, 0, 2, None))
-calendarQueue.scheduler.enter(10_000_000, 1, calendarQueue.triggerPacketIncrement, argument=(0,))
+calendarQueue.scheduler.enter(5_000_000_000, 1, calendarQueue.triggerPacketIncrement, argument=(0,))
+calendarQueue.scheduler.enter(10_000_000_000, 1, calendarQueue.downRouterAndTriggerPacketIncrement, argument=(0,2))
+calendarQueue.scheduler.enter(15_000_000_000, 1, lambda: (listRouter[2].up(), print("Router", 2, "is up!")))
 
 calendarQueue.scheduler.run()
