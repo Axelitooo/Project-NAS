@@ -15,7 +15,7 @@ class SimulatedTime:
         return self.staticTime
 
     def dummy(self, delay):
-        self.staticTime += 1
+        self.staticTime += delay
 
 
 class CalendarQueue:
