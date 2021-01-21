@@ -2,8 +2,10 @@ import queue
 
 class Router:
 
-    def __init__(self, id, state, tokenBucket, neighbours, linkStates, LSDB, bufferSize, calendar):
+    def __init__(self, id, x, y, state, tokenBucket, neighbours, linkStates, LSDB, bufferSize, calendar):
         self.id = id
+        self.x = x
+        self.y = y
         self.state = state  # int or boolean
         self.tokenBucket = tokenBucket  # list of tokenBucket
         self.neighbours = neighbours  # dictionary
