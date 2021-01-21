@@ -71,15 +71,15 @@ bucket_z = TokenBucket(rate, capacity, storage_z)
 simu = SimulatedTime(0)
 calendarQueue = CalendarQueue(simu)
 
-a = Router(id=0, state=True, tokenBucket=bucket_a, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
+a = Router(id=0, x = 19, y= 34, state=True, tokenBucket=bucket_a, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
            linkStates=None)
-b = Router(id=1, state=True, tokenBucket=bucket_b, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
+b = Router(id=1, x=34, y=34, state=True, tokenBucket=bucket_b, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
            linkStates=None)
-x = Router(id=2, state=True, tokenBucket=bucket_x, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
+x = Router(id=2, x= 25, y =45, state=True, tokenBucket=bucket_x, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
            linkStates=None)
-y = Router(id=3, state=True, tokenBucket=bucket_y, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
+y = Router(id=3, x=26, y=59, state=True, tokenBucket=bucket_y, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
            linkStates=None)
-z = Router(id=4, state=True, tokenBucket=bucket_z, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
+z = Router(id=4, x=38, y=40, state=True, tokenBucket=bucket_z, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
            linkStates=None)
 
 listRouter = [a, b, x, y, z]
