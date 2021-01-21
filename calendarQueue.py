@@ -15,7 +15,7 @@ class SimulatedTime:
         return self.staticTime
 
     def dummy(self, delay):
-        self.staticTime += 1
+        self.staticTime += delay
 
 
 class CalendarQueue:
@@ -56,50 +56,51 @@ class CalendarQueue:
             process_time = 5
             self.scheduler.enter(process_time, 1, router.process_packet)
 
-storage_a = MemoryStorage()
-storage_b = MemoryStorage()
-storage_x = MemoryStorage()
-storage_y = MemoryStorage()
-storage_z = MemoryStorage()
+if __name__ == "__main__":
+	storage_a = MemoryStorage()
+	storage_b = MemoryStorage()
+	storage_x = MemoryStorage()
+	storage_y = MemoryStorage()
+	storage_z = MemoryStorage()
 
-rate = 10
-capacity = 100
+	rate = 10
+	capacity = 100
 
-bucket_a = TokenBucket(rate, capacity, storage_a)
-bucket_b = TokenBucket(rate, capacity, storage_b)
-bucket_x = TokenBucket(rate, capacity, storage_x)
-bucket_y = TokenBucket(rate, capacity, storage_y)
-bucket_z = TokenBucket(rate, capacity, storage_z)
+	bucket_a = TokenBucket(rate, capacity, storage_a)
+	bucket_b = TokenBucket(rate, capacity, storage_b)
+	bucket_x = TokenBucket(rate, capacity, storage_x)
+	bucket_y = TokenBucket(rate, capacity, storage_y)
+	bucket_z = TokenBucket(rate, capacity, storage_z)
 
-simu = SimulatedTime(0)
-calendarQueue = CalendarQueue(simu)
+	simu = SimulatedTime(0)
+	calendarQueue = CalendarQueue(simu)
 
-a = Router(id=0, x = 19, y= 34, state=True, tokenBucket=bucket_a, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
-           linkStates=None)
-b = Router(id=1, x=34, y=34, state=True, tokenBucket=bucket_b, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
-           linkStates=None)
-x = Router(id=2, x= 25, y =45, state=True, tokenBucket=bucket_x, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
-           linkStates=None)
-y = Router(id=3, x=26, y=59, state=True, tokenBucket=bucket_y, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
-           linkStates=None)
-z = Router(id=4, x=38, y=40, state=True, tokenBucket=bucket_z, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
-           linkStates=None)
+	a = Router(id=0, x = 19, y= 34, state=True, tokenBucket=bucket_a, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
+	           linkStates=None)
+	b = Router(id=1, x=34, y=34, state=True, tokenBucket=bucket_b, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
+	           linkStates=None)
+	x = Router(id=2, x= 25, y =45, state=True, tokenBucket=bucket_x, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
+	           linkStates=None)
+	y = Router(id=3, x=26, y=59, state=True, tokenBucket=bucket_y, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
+	           linkStates=None)
+	z = Router(id=4, x=38, y=40, state=True, tokenBucket=bucket_z, neighbours={}, LSDB={}, bufferSize=10, calendar=calendarQueue,
+	           linkStates=None)
 
-listRouter = [a, b, x, y, z]
-a.add_neighbour(1, 1)
-a.add_neighbour(2, 1)
-b.add_neighbour(0, 1)
-b.add_neighbour(2, 1)
-x.add_neighbour(0, 1)
-x.add_neighbour(1, 1)
+	listRouter = [a, b, x, y, z]
+	a.add_neighbour(1, 1)
+	a.add_neighbour(2, 1)
+	b.add_neighbour(0, 1)
+	b.add_neighbour(2, 1)
+	x.add_neighbour(0, 1)
+	x.add_neighbour(1, 1)
 
-calendarQueue.scheduler.enter(0, 1, calendarQueue.sendPacket, argument=(2_000, 0, 2, None))
-calendarQueue.scheduler.enter(5_000, 1, calendarQueue.triggerPacketIncrement, argument=(1,))
-# calendarQueue.scheduler.enter(10_000_000_000, 1, lambda: (listRouter[2].down(),
-#                                                           print("Router", 2, "is down!"),
-#                                                           calendarQueue.triggerPacketIncrement(0)))
-# calendarQueue.scheduler.enter(15_000_000_000, 1, lambda: (listRouter[2].up(),
-#                                                           print("Router", 2, "is up!")))
-# calendarQueue.scheduler.enter(20_000_000_000, 1, calendarQueue.triggerPacketIncrement, argument=(2,))
-#
-calendarQueue.scheduler.run()
+	calendarQueue.scheduler.enter(0, 1, calendarQueue.sendPacket, argument=(2_000, 0, 2, None))
+	#calendarQueue.scheduler.enter(5_000, 1, calendarQueue.triggerPacketIncrement, argument=(1,))
+	# calendarQueue.scheduler.enter(10_000_000_000, 1, lambda: (listRouter[2].down(),
+	#                                                           print("Router", 2, "is down!"),
+	#                                                           calendarQueue.triggerPacketIncrement(0)))
+	# calendarQueue.scheduler.enter(15_000_000_000, 1, lambda: (listRouter[2].up(),
+	#                                                           print("Router", 2, "is up!")))
+	# calendarQueue.scheduler.enter(20_000_000_000, 1, calendarQueue.triggerPacketIncrement, argument=(2,))
+	#
+	calendarQueue.scheduler.run()

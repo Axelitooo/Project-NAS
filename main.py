@@ -87,4 +87,3 @@ def main():
     close_graph()
 
 easy_run(main)
-
