@@ -29,18 +29,19 @@ class Router:
             self.neighbours[id] = (weight, delay)
             self.LSDB[str(self.id) + "->" + str(id)] = {"weight": weight, "seqnum": 1}
         else:
-            print("Id already in dictionary")
+            pass
+            # print("Id already in dictionary")
 
     def process_packet(self):
-        print("processing packet")
+        # print("processing packet")
         packet = self.buffer.get(False, None)
         if self.state:  # if not down
             if packet.packetType == "ACK":
                 self.cancel_ack(self.expectedAcks.pop(packet.id, None))
-                print("ACK received by " + str(self.id) + " from " + str(packet.source))
+                # print("ACK received by " + str(self.id) + " from " + str(packet.source))
             elif packet.packetType == "LSP":
-                print("processing LSP")
-                print("LSP received by " + str(self.id) + " from " + str(packet.source))
+                # print("processing LSP")
+                # print("LSP received by " + str(self.id) + " from " + str(packet.source))
                 ack = Packet(source=packet.destination, destination=packet.source, packetType="ACK",
                              content=None, id=packet.id)
                 # every LSP packet is ACKed; similarly to TCP behaviour rather than OSPF's one
@@ -48,11 +49,11 @@ class Router:
                 self.send_packet(ack)
                 for link in packet.content.keys():
                     if (self.LSDB.get(link) is None) or (self.LSDB[link]["seqnum"] < packet.content[link]["seqnum"]):
-                        print("Router", self.id, "updating LSDB")
+                        # print("Router", self.id, "updating LSDB")
                         # update your own LSDB
                         self.LSDB[link] = packet.content[link]
                         # flood
-                        print("Router", self.id, "FLOODING!!")
+                        print("*****Router", self.id, "FLOODING!!*****")
                         for router in self.neighbours.keys():
                             if router != packet.source:
                                 self.lastPacketId += 1
@@ -73,7 +74,7 @@ class Router:
     """
     def compute_shortest_path(self, start, end, visited=[], distances={}, predecessors={}):
         print("computing shortest path")
-        
+
         # we've found our end node, now find the path to it, and return
         if start == end:
             path = []
@@ -109,11 +110,11 @@ class Router:
             return 0
         else:
             self.buffer.put(packet, False, None)
-            print("Router", self.id, "buffer size", self.buffer.qsize())
+            # print("Router", self.id, "buffer size", self.buffer.qsize())
             return 1
 
     # sends packet to the scheduler
-    def send_packet(self, packet, delay=1_000_000):
+    def send_packet(self, packet, delay=10):
         self.calendar.sendPacket(delay, packet.source, packet.destination, packet)
         #self.expectedAcks[packet.id] = packet
 
@@ -121,13 +122,14 @@ class Router:
         # if the destination is considered to be busy the packed is dropped on the source
         if self.tokenBucket.consume(str(packet.destination), now, packet.size):
             if packet.packetType == "ACK":
-                print("ACK sent by " + str(self.id) + " to " + str(packet.destination))
+                print("TIMESTAMP: " + str(self.calendar.simu.time())+ " ACK sent by " + str(self.id) + " to " + str(packet.destination))
+                pass
             elif packet.packetType == "LSP":
                 self.expectedAcks[packet.id] = packet
-                print("LSP sent by " + str(self.id) + " to " + str(packet.destination))
-                delay = 1_000_000
-                retransmission_timer = 100_500_000
-                print("Program retransmission")
+                print("TIMESTAMP: " + str(self.calendar.simu.time())+ "LSP sent by " + str(self.id) + " to " + str(packet.destination))
+                delay = 10
+                retransmission_timer = 1_000
+                # print("Program retransmission")
                 self.calendar.scheduleRetransmission(delay, retransmission_timer, packet)
 
     def useful_content(self, packet):
