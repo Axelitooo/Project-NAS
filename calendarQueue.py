@@ -31,7 +31,7 @@ class CalendarQueue:
         listRouter[router_source].send_packet_now(packet, simu.time())
 
     def scheduleRetransmission(self, delay, retransmission_timer, packet):
-        event = self.scheduler.enter(delay, 1, self.sendPacket, argument=(retransmission_timer, packet.source, packet.destination, packet))
+        event = self.scheduler.enter(retransmission_timer, 1, self.sendPacket, argument=(delay, packet.source, packet.destination, packet))
         packet.event = event
 
     def triggerPacketIncrement(self, router_source):
@@ -49,8 +49,9 @@ class CalendarQueue:
         res = listRouter[router_destination].receive_packet(packet)
         print("packet received by :", packet.destination, "return code :", res)
         if res == 1:
-            listRouter[router_destination].process_packet()
-
+            router = listRouter[router_destination]
+            process_time = 10_000_000
+            self.scheduler.enter(process_time, 1, router.process_packet)
 
 storage_a = MemoryStorage()
 storage_b = MemoryStorage()
@@ -90,11 +91,12 @@ x.add_neighbour(0, 1)
 x.add_neighbour(1, 1)
 
 calendarQueue.scheduler.enter(0, 1, calendarQueue.sendPacket, argument=(2_000_000, 0, 2, None))
-calendarQueue.scheduler.enter(5_000_000_000, 1, calendarQueue.triggerPacketIncrement, argument=(0,))
+calendarQueue.scheduler.enter(5_000_000_000, 1, calendarQueue.triggerPacketIncrement, argument=(1,))
 calendarQueue.scheduler.enter(10_000_000_000, 1, lambda: (listRouter[2].down(),
                                                           print("Router", 2, "is down!"),
                                                           calendarQueue.triggerPacketIncrement(0)))
 calendarQueue.scheduler.enter(15_000_000_000, 1, lambda: (listRouter[2].up(),
                                                           print("Router", 2, "is up!")))
+calendarQueue.scheduler.enter(20_000_000_000, 1, calendarQueue.triggerPacketIncrement, argument=(2,))
 
 calendarQueue.scheduler.run()

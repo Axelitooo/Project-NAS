@@ -100,7 +100,6 @@ class Router:
 
     def cancel_ack(self, packet):
         if (packet is not None) and (packet.event is not None):
-            print(packet.event)
             self.calendar.cancelPacket(packet.event)
 
     def receive_packet(self, packet):
@@ -108,12 +107,13 @@ class Router:
             return 0
         else:
             self.buffer.put(packet, False, None)
+            print("Router", self.id, "buffer size", self.buffer.qsize())
             return 1
 
     # sends packet to the scheduler
     def send_packet(self, packet, delay=1_000_000):
         self.calendar.sendPacket(delay, packet.source, packet.destination, packet)
-        self.expectedAcks[packet.id] = packet
+        #self.expectedAcks[packet.id] = packet
 
     def send_packet_now(self, packet, now):
         # if the destination is considered to be busy the packed is dropped on the source
@@ -137,6 +137,7 @@ class Router:
     """Used for simulation of propagation"""
     def increment_lsdb_and_flood(self):
         # increment seqnum for each link in LSDB
+        print("Keys", self.LSDB.keys())
         for link in self.LSDB.keys():
             self.LSDB[link] = {"weight": self.LSDB[link]["weight"], "seqnum": self.LSDB[link]["seqnum"] + 1}
         # flood neighbours
