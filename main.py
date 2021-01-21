@@ -77,8 +77,7 @@ def runWorld(graphSizeX = 50, graphSizeY = 50, areaSize = 10, routerChancePerAre
                     # move_to(xMid + (x1 + x2)/20, yMid + (y1 + y2)/20)
                     # line_to(xMid + (x1 + x2)/10, yMid + (y1 + y2)/10)
 
-
-                draw_text(x1, y1 - 10, str(routerList[routerId].buffer.qsize()) + "/" + str(routerList[routerId].bufferSize))
+                # draw_text(x1, y1 - 10, str(routerList[routerId].buffer.qsize()) + "/" + str(routerList[routerId].bufferSize))
 
 
 def main():
