@@ -24,8 +24,8 @@ class CalendarQueue:
         self.simu = simu
     def sendPacket(self, propagation, router_source, router_destination, packet):  # add a sending packet to a neighbour in the calendarQueue
         print("TIMESTAMP: " + str(self.simu.time()) + " LSDB source:" + str(router_source) )
-        for link in listRouter[router_source].LSDB.keys():
-            print(link+str(listRouter[router_source].LSDB[link]))
+        #for link in listRouter[router_source].LSDB.keys():
+        #    print(link+str(listRouter[router_source].LSDB[link]))
 
         if packet is None:
             packet = Packet(router_source, router_destination, "LSP", listRouter[router_source].LSDB, str(router_source) + "->" + str(router_destination))
@@ -81,11 +81,10 @@ if __name__ == "__main__":
 
     calendarQueue.scheduler.enter(0, 1, calendarQueue.sendPacket, argument=(2_000, 0, 2, None))
     calendarQueue.scheduler.enter(5_000, 1, calendarQueue.triggerPacketIncrement, argument=(1,))
-	# calendarQueue.scheduler.enter(10_000_000_000, 1, lambda: (listRouter[2].down(),
-	#                                                           print("Router", 2, "is down!"),
-	#                                                           calendarQueue.triggerPacketIncrement(0)))
-	# calendarQueue.scheduler.enter(15_000_000_000, 1, lambda: (listRouter[2].up(),
-	#                                                           print("Router", 2, "is up!")))
+    calendarQueue.scheduler.enter(10_000, 1, lambda: (listRouter[3].down(), print("Router", 3, "is down!"), calendarQueue.triggerPacketIncrement(2)))
+    calendarQueue.scheduler.enter(15_000, 1, lambda: (listRouter[3].up(), print("Router", 3, "is up!")))
 	# calendarQueue.scheduler.enter(20_000_000_000, 1, calendarQueue.triggerPacketIncrement, argument=(2,))
 	#
+    for i in range(len(listRouter)):
+        calendarQueue.scheduler.enter(50_000+i*1000, 1, listRouter[i].show_LSDB)
     calendarQueue.scheduler.run()

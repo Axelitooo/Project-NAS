@@ -24,6 +24,18 @@ class Router:
     def show_neighbours(self):
         print(self.neighbours)
 
+    def show_LSDB(self):
+        print("LSDB OF ROUTER " + str(self.id) )
+        i=1
+        for elem in self.LSDB.keys():
+            print(elem, end= " ")
+            print(self.LSDB[elem], end="; ")
+            if (i%3==0):
+                print("")
+            i+=1
+        print("")
+        
+
     def add_neighbour(self, id, weight, delay=10):
         if id not in self.neighbours.keys():
             self.neighbours[id] = (weight, delay)
